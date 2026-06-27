@@ -108,8 +108,9 @@ def main():
     tok = load_json("token.json")
     if not tok:  # GitHub Actions 등: 파일 없으면 환경변수(IG_TOKEN/IG_USER_ID)에서
         import os as _os
-        if _os.environ.get("IG_TOKEN") and _os.environ.get("IG_USER_ID"):
-            tok = {"access_token": _os.environ["IG_TOKEN"], "ig_user_id": _os.environ["IG_USER_ID"],
+        if _os.environ.get("IG_TOKEN"):
+            tok = {"access_token": _os.environ["IG_TOKEN"],
+                   "ig_user_id": _os.environ.get("IG_USER_ID") or "",   # 빈값이면 아래서 자동탐색
                    "ig_username": _os.environ.get("IG_USERNAME", "leehyun_calc")}
         else:
             sys.exit("token.json/IG_TOKEN 없음 — get_ig_token.py 또는 GitHub Secrets 설정")
