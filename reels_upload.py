@@ -113,6 +113,21 @@ def main():
                    "ig_username": _os.environ.get("IG_USERNAME", "leehyun_calc")}
         else:
             sys.exit("token.json/IG_TOKEN 없음 — get_ig_token.py 또는 GitHub Secrets 설정")
+    # ig_user_id 미지정 시 토큰으로 자동 발견(/me/accounts -> instagram_business_account)
+    if not tok.get("ig_user_id"):
+        try:
+            r = requests.get(f"{GRAPH}/me/accounts",
+                             params={"fields": "instagram_business_account", "access_token": tok["access_token"]},
+                             timeout=30).json()
+            for pg in r.get("data", []):
+                iba = pg.get("instagram_business_account")
+                if iba:
+                    tok["ig_user_id"] = iba["id"]; break
+        except Exception as e:
+            print("ig_user_id 자동탐색 실패:", e)
+    if not tok.get("ig_user_id"):
+        sys.exit("ig_user_id 를 찾지 못했습니다 (IG_USER_ID 설정 또는 권한 확인).")
+
     now = datetime.now(timezone.utc).astimezone()
 
     todo = []
