@@ -1,0 +1,36 @@
+name: YT Longform Auto-Comment
+
+on:
+  schedule:
+    - cron: '30 9 * * *'      # 매일 09:30 UTC = 18:30 KST (롱폼 18:00 공개 30분 뒤)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '실행 모드 (빈칸=댓글 달기, --list=상태만)'
+        default: '--list'
+
+permissions:
+  contents: write             # yt_commented.json 커밋용
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-yt.txt
+      - name: Post CTA comments on newly public longforms
+        env:
+          YT_TOKEN: ${{ secrets.YT_TOKEN }}
+        run: |
+          MODE="${{ github.event.inputs.mode || '' }}"
+          python yt_comment.py $MODE
+      - name: Commit commented state
+        if: ${{ github.event.inputs.mode != '--list' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add yt_commented.json
+          git diff --staged --quiet || (git commit -m "chore: update yt_commented.json [skip ci]" && git push)
