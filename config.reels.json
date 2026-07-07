@@ -2,6 +2,11 @@
   "video_dir": "videos",
   "reels": [
     {
+      "file": "reel_heart.mp4",
+      "caption": "극곡선 r = 1 + sinθ는 왜 하트(카디오이드) 모양이 될까?\n\nθ를 0부터 2π까지 움직이며 원점에서의 거리 r을 재보면, 위아래로 부푼 하트 곡선이 그려집니다. 극좌표가 만드는 가장 예쁜 곡선 중 하나예요.\n\n📚 이현 전자책·수학 진단 → leehyunmath.com (프로필 링크)\n\n#릴스 #미적분 #극좌표 #극곡선 #카디오이드 #대학수학 #APCalculus #IBMath",
+      "publishAt": "2026-07-07T21:00:00+09:00"
+    },
+    {
       "file": "reel_slope.mp4",
       "caption": "매개곡선 기울기, 그냥 대입하면 오답인 이유\n\n매개변수로 주어진 곡선의 기울기는 dy/dx = (dy/dt)/(dx/dt). y를 x로 그냥 미분하면 틀립니다.\n\n📚 이현 전자책·수학 진단 → leehyunmath.com (프로필 링크)\n\n#릴스 #미적분 #매개곡선 #사이클로이드 #대학수학 #APCalculus #IBMath",
       "publishAt": "2026-07-13T09:00:00+09:00"
