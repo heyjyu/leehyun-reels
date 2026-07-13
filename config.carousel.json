@@ -1,0 +1,19 @@
+{
+  "image_base": "https://raw.githubusercontent.com/heyjyu/leehyun-ig-assets/main",
+  "posts": [
+    {
+      "key": "lead3",
+      "skip": true,
+      "publishAt": null,
+      "images": [
+        "lead3/slide1.png",
+        "lead3/slide2.png",
+        "lead3/slide3.png",
+        "lead3/slide4.png",
+        "lead3/slide5.png",
+        "lead3/slide6.png"
+      ],
+      "caption": "적분 부등식 6개... 이걸 다 계산하려고 했다면 이 문제는 이미 늪입니다. 🫠\n\n2026 연세대 자연계열 [논제3] 적분부등식과 판별식.\n사실 이 문제, 적분을 단 한 번도 계산하지 않고 풀려요. 조건을 딱 한 줄로 바꿔 읽으면 익숙한 판별식 문제 하나로 끝납니다.\n\n그 '한 줄'이 뭔지 + 전체 풀이(문제·실전개념·단계별 해설·채점기준·한 줄 요약)를 무료 PDF로 드릴게요.\n\n📩 댓글에 \"연논3\" 남기면 DM으로 바로 보내드립니다. 인스타 아이디만 있으면 끝!\n\n연세대 기출 5문항 완전분석서 중 논제3 하나예요. 나머지도 궁금하면 팔로우 🔖\n\n#연세대수리논술 #수리논술 #자연계열논술 #재수생 #고3 #수시 #논술전형 #이현수학 #적분 #미적분 #수능수학 #정시 #무료자료"
+    }
+  ]
+}
