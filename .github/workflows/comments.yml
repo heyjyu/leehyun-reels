@@ -2,12 +2,17 @@ name: YT Longform Auto-Comment
 
 on:
   schedule:
-    - cron: '30 9 * * *'      # 매일 09:30 UTC = 18:30 KST (롱폼 18:00 공개 30분 뒤)
+    # GH Actions 예약은 상습 1~3시간 지연됨(실측 10:39~12:18 UTC) + 가끔 아예 스킵됨.
+    # → 하루 2번 돌려 놓침 방지. yt_commented.json 이 중복 막으니 두 번 돌아도 안전.
+    - cron: '30 9 * * *'      # 09:30 UTC = 18:30 KST (롱폼 18:00 공개 직후)
+    - cron: '30 14 * * *'     # 14:30 UTC = 23:30 KST (1차가 스킵/지연됐을 때 백업)
   workflow_dispatch:
     inputs:
       mode:
-        description: '실행 모드 (빈칸=댓글 달기, --list=상태만)'
-        default: '--list'
+        # ⚠️ 기본값을 '--list'로 두면 수동 트리거가 목록만 뽑고 댓글을 안 담(빈문자 넘겨도 기본값이 먹힘).
+        #    cron(schedule)은 inputs가 없어 항상 ''=댓글 달기로 동작. 수동도 같게 맞춤.
+        description: "실행 모드 (빈칸=댓글 달기(기본), '--list'=상태만 확인)"
+        default: ''
 
 permissions:
   contents: write             # yt_commented.json 커밋용
