@@ -25,6 +25,11 @@
       "file": "reel_tangent.mp4",
       "caption": "극좌표 접선 기울기, r을 상수로 미분하면 무조건 오답\n\n극곡선 r = f(θ)의 접선 기울기는 dy/dx = (dy/dθ)/(dx/dθ). r을 상수로 두고 그냥 미분하면 틀립니다 — 몫의 미분이 아니라, r = f(θ)로 보고 분자·분모 각각 곱의 미분을 해야 해요.\n\n📚 이현 전자책·수학 진단 → leehyunmath.com (프로필 링크)\n\n#릴스 #미적분 #극좌표 #극곡선 #대학수학 #APCalculus #IBMath",
       "publishAt": "2026-07-23T09:00:00+09:00"
+    },
+    {
+      "file": "reel_rose.mp4",
+      "caption": "극곡선 r = cos2θ, 꽃잎이 2장 아니라 4장인 이유\n\n극좌표에서 가장 예쁜 곡선, 장미곡선(rose curve). r = cos(nθ)에서 계수 n이 짝수면 꽃잎이 2n장이 됩니다 — 그래서 r = cos2θ는 딱 네 잎짜리 사엽선.\n\n📚 이현 전자책·수학 진단 → leehyunmath.com (프로필 링크)\n\n#릴스 #미적분 #극좌표 #극곡선 #장미곡선 #대학수학 #APCalculus #IBMath",
+      "publishAt": "2026-07-27T09:00:00+09:00"
     }
   ]
 }
