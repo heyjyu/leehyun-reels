@@ -17,6 +17,17 @@ def main():
         sys.exit("token.json / IG_TOKEN 없음")
     token = tok["access_token"]
 
+    # 진단: 토큰에 실제로 부여된 스코프 확인(권한 문제 vs API 미지원 구분용)
+    try:
+        dbg = requests.get(f"{GRAPH}/debug_token",
+                           params={"input_token": token, "access_token": token},
+                           timeout=30).json()
+        scopes = dbg.get("data", {}).get("scopes", [])
+        print("토큰 스코프:", scopes)
+        print("instagram_manage_comments 포함:", "instagram_manage_comments" in scopes)
+    except Exception as e:
+        print("스코프 확인 실패:", e)
+
     todo = [(f, v) for f, v in state.items() if v.get("mediaId") and not v.get("commentId")]
     if not todo:
         print("댓글 달 발행분 없음(전부 완료)."); return
