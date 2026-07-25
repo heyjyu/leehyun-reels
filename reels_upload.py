@@ -96,6 +96,40 @@ def post_comment(media_id, token, text=IG_CTA_COMMENT):
     return r.json().get("id")
 
 
+# ★ 캡션 CTA(자동 삽입) — IG는 링크가 클릭 안 되므로 댓글이든 캡션이든 효과 동일한데,
+#   캡션은 권한 없이 100% 자동이라 이쪽을 정본으로 씀(댓글은 권한 생기면 보너스).
+#   해시태그 앞(본문 끝)에 삽입해 첫 화면 '더 보기' 근처에서 읽히게 함.
+IG_CTA_CAPTION = (
+    "▶ 자세한 풀강의: 유튜브 leehyun_calc\n"
+    "📚 정규강의·수학 컨설팅: 프로필 링크"
+)
+
+
+def with_cta(caption, cta=IG_CTA_CAPTION):
+    """캡션에 CTA를 자동 삽입. 이미 들어 있으면 그대로 둠(중복 방지).
+       해시태그 블록이 있으면 그 '앞'에, 없으면 맨 끝에 붙인다."""
+    if not caption:
+        return cta
+    if "leehyun_calc" in caption:          # 이미 CTA 있음
+        return caption
+    lines = caption.rstrip().split("\n")
+    # 마지막 해시태그 줄들을 찾아 그 앞에 삽입
+    idx = len(lines)
+    for i in range(len(lines) - 1, -1, -1):
+        s = lines[i].strip()
+        if s.startswith("#"):
+            idx = i
+        elif s:
+            break
+    head, tail = lines[:idx], lines[idx:]
+    while head and not head[-1].strip():
+        head.pop()
+    parts = ["\n".join(head).rstrip(), cta]
+    if tail:
+        parts.append("\n".join(tail).strip())
+    return "\n\n".join(p for p in parts if p)
+
+
 def due(reel, now):
     pa = reel.get("publishAt")
     return True if not pa else datetime.fromisoformat(pa) <= now
@@ -172,7 +206,7 @@ def main():
             continue
         print(f"⬆️  {r['file']}")
         try:
-            mid = publish_reel(ig, token, path, r.get("caption", ""))
+            mid = publish_reel(ig, token, path, with_cta(r.get("caption", "")))
             state[r["file"]] = {"mediaId": mid, "at": now.isoformat()}
             save_state(state)
             print(f"    ✅ 발행 완료 mediaId: {mid}")
