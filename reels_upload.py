@@ -92,7 +92,9 @@ def upload_container(ig_user_id, token, file_path, caption, verbose=False):
     return cid
 
 
-def publish_reel(ig_user_id, token, file_path, caption, attempts=5):
+def publish_reel(ig_user_id, token, file_path, caption, attempts=2):
+    # attempts=2: rupload 400은 러너(IP)별 복불복이라 같은 런 안 재시도는 거의 무의미 —
+    # 진짜 재시도는 워크플로의 "Retry on fresh runner"(새 러너 재디스패치)가 담당.
     """업로드(컨테이너 FINISHED까지) 후 ④ 발행. media id 반환.
     ⚠️ rupload가 간헐적으로 400 ProcessingFailedError를 뱉음(같은 파일·같은 코드가 몇 분 차이로
     성공/실패 반복, 2026-07-25 관측. retriable:false는 믿지 말 것) → 컨테이너를 새로 파며 재시도."""
