@@ -37,23 +37,37 @@ def save_state(state):
               ensure_ascii=False, indent=2)
 
 
-def publish_reel(ig_user_id, token, file_path, caption):
-    """resumable: ① 컨테이너 생성 ② 파일 바이트 업로드 ③ 처리 폴링 ④ 발행. media id 반환."""
+def _dump_resp(tag, resp):
+    """진단용: 상태코드·fbtrace 헤더·본문 전체 출력."""
+    hdr = {k: v for k, v in resp.headers.items()
+           if k.lower() in ("x-fb-trace-id", "x-fb-rev", "x-fb-debug", "www-authenticate",
+                            "facebook-api-version", "content-type")}
+    print(f"    [{tag}] HTTP {resp.status_code} {hdr}")
+    print(f"    [{tag}] body: {resp.text[:500]}")
+
+
+def upload_container(ig_user_id, token, file_path, caption, verbose=False):
+    """① 컨테이너 생성 ② 바이트 업로드 ③ 처리 폴링(FINISHED까지). 컨테이너 id 반환. 발행 안 함."""
     size = os.path.getsize(file_path)
     # 1) 컨테이너(REELS, resumable)
     r = requests.post(f"{GRAPH}/{ig_user_id}/media", data={
         "media_type": "REELS", "upload_type": "resumable",
         "caption": caption, "access_token": token,
     }, timeout=60)
+    if verbose:
+        _dump_resp("container", r)
     r.raise_for_status()
     cid = r.json()["id"]
     print(f"    컨테이너: {cid}  (업로드 {size/1e6:.1f}MB)")
-    # 2) 파일 바이트 업로드(rupload)
-    with open(file_path, "rb") as f:
-        up = requests.post(f"{RUPLOAD}/{cid}", headers={
-            "Authorization": f"OAuth {token}",
-            "offset": "0", "file_size": str(size),
-        }, data=f, timeout=600)
+    # 2) 파일 바이트 업로드(rupload) — 메모리로 읽어 Content-Length 확정 + octet-stream 명시
+    data = open(file_path, "rb").read()
+    up = requests.post(f"{RUPLOAD}/{cid}", headers={
+        "Authorization": f"OAuth {token}",
+        "offset": "0", "file_size": str(size),
+        "Content-Type": "application/octet-stream",
+    }, data=data, timeout=600)
+    if verbose or not up.ok:
+        _dump_resp("rupload", up)
     up.raise_for_status()
     if not up.json().get("success", True):
         raise RuntimeError(f"업로드 실패: {up.text}")
@@ -65,14 +79,19 @@ def publish_reel(ig_user_id, token, file_path, caption):
                          params={"fields": "status_code,status", "access_token": token},
                          timeout=30).json()
         code = s.get("status_code")
-        print(f"    처리중… {code}")
+        print(f"    처리중… {code}  {s.get('status','')}")
         if code == "FINISHED":
             break
         if code in ("ERROR", "EXPIRED"):
             raise RuntimeError(f"처리 실패: {s}")
     else:
         raise RuntimeError("처리 타임아웃")
-    # 4) 발행
+    return cid
+
+
+def publish_reel(ig_user_id, token, file_path, caption):
+    """업로드(컨테이너 FINISHED까지) 후 ④ 발행. media id 반환."""
+    cid = upload_container(ig_user_id, token, file_path, caption)
     r = requests.post(f"{GRAPH}/{ig_user_id}/media_publish",
                       data={"creation_id": cid, "access_token": token}, timeout=60)
     r.raise_for_status()
@@ -142,6 +161,8 @@ def main():
     g.add_argument("--now", action="store_true", help="미발행 전부 지금")
     g.add_argument("--key", help="특정 키만 지금")
     g.add_argument("--list", action="store_true", help="상태만")
+    g.add_argument("--diagnose", metavar="KEY",
+                   help="발행 없이 컨테이너→업로드→처리까지만(전체 응답 덤프). 발행된 것도 지정 가능")
     args = ap.parse_args()
 
     cfg = load_json("config.reels.json")
@@ -182,6 +203,22 @@ def main():
 
     now = datetime.now(timezone.utc).astimezone()
 
+    if args.diagnose:
+        # 발행 없이 업로드 파이프라인만 검증(공개 부작용 없음 — media_publish 안 함)
+        target = next((r for r in reels if r.get("key") == args.diagnose or r["file"] == args.diagnose), None)
+        if not target:
+            sys.exit(f"diagnose 대상 없음: {args.diagnose}")
+        path = os.path.join(cfg["video_dir"], target["file"])
+        print(f"🔬 진단: {target['file']}  ({os.path.getsize(path)/1e6:.1f}MB)")
+        try:
+            cid = upload_container(tok["ig_user_id"], tok["access_token"], path,
+                                   with_cta(target.get("caption", "")), verbose=True)
+            print(f"    ✅ 진단 통과(FINISHED, 발행 안 함): 컨테이너 {cid}")
+        except Exception as e:
+            print(f"    ❌ 진단 실패: {e}")
+            sys.exit(1)
+        return
+
     todo = []
     for r in reels:
         if r.get("skip") or r["file"] in state:
@@ -199,10 +236,12 @@ def main():
 
     ig, token, vdir = tok["ig_user_id"], tok["access_token"], cfg["video_dir"]
     print(f"발행 대상 {len(todo)}개 (@{tok.get('ig_username','?')})")
+    failed = []                               # ★ 실패 시 exit 1 → Actions 런이 빨갛게 뜸(무성실패 방지)
     for r in todo:
         path = os.path.join(vdir, r["file"])
         if not os.path.exists(path):
             print(f"⚠️  파일 없음, 건너뜀: {r['file']}")
+            failed.append(r["file"])
             continue
         print(f"⬆️  {r['file']}")
         try:
@@ -224,9 +263,18 @@ def main():
                   print(f"    ⚠️ 댓글 실패(발행은 성공): {e}")
         except requests.HTTPError as e:
             print(f"    ❌ 실패: {e.response.text[:300]}")
+            failed.append(r["file"])
         except Exception as e:
             print(f"    ❌ 실패: {e}")
+            failed.append(r["file"])
+    # ★ 밀린 것(publishAt<now인데 미발행) 잔존 검사 — 실패·스킵이 조용히 묻히는 걸 막는다
+    overdue = [r["file"] for r in reels
+               if not r.get("skip") and r["file"] not in state and r.get("publishAt")
+               and datetime.fromisoformat(r["publishAt"]) <= now]
     print("끝. 상태는 published.json 참고.")
+    if failed or overdue:
+        print(f"🚨 실패 {len(failed)}건 {failed} / 밀림 {len(overdue)}건 {overdue}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
