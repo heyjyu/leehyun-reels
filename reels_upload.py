@@ -79,6 +79,23 @@ def publish_reel(ig_user_id, token, file_path, caption):
     return r.json()["id"]
 
 
+# 릴스 CTA 댓글 — IG는 댓글·캡션 링크가 클릭 안 되므로 유튜브 채널명을 각인 + 프로필 링크 유도.
+IG_CTA_COMMENT = (
+    "풀강의 👉 유튜브 leehyun_calc\n"
+    "▶ 자세한 강의: 유튜브에서 leehyun_calc 검색\n"
+    "📚 정규강의·수학 컨설팅: 프로필 링크"
+)
+
+
+def post_comment(media_id, token, text=IG_CTA_COMMENT):
+    """발행된 릴스에 CTA 댓글을 단다. instagram_manage_comments 권한 필요.
+       권한이 없으면 예외 → 호출부에서 잡아 '발행 자체'는 성공으로 유지."""
+    r = requests.post(f"{GRAPH}/{media_id}/comments",
+                      data={"message": text, "access_token": token}, timeout=60)
+    r.raise_for_status()
+    return r.json().get("id")
+
+
 def due(reel, now):
     pa = reel.get("publishAt")
     return True if not pa else datetime.fromisoformat(pa) <= now
@@ -159,6 +176,16 @@ def main():
             state[r["file"]] = {"mediaId": mid, "at": now.isoformat()}
             save_state(state)
             print(f"    ✅ 발행 완료 mediaId: {mid}")
+            # CTA 댓글(유튜브 유도). 실패해도 발행은 성공으로 둠(권한 미부여 등).
+            try:
+                cmt = post_comment(mid, token)
+                state[r["file"]]["commentId"] = cmt
+                save_state(state)
+                print(f"    💬 CTA 댓글 완료: {cmt}")
+            except requests.HTTPError as e:
+                print(f"    ⚠️ 댓글 실패(발행은 성공): {e.response.text[:200]}")
+            except Exception as e:
+                print(f"    ⚠️ 댓글 실패(발행은 성공): {e}")
         except requests.HTTPError as e:
             print(f"    ❌ 실패: {e.response.text[:300]}")
         except Exception as e:
