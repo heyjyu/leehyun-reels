@@ -210,16 +210,18 @@ def main():
             state[r["file"]] = {"mediaId": mid, "at": now.isoformat()}
             save_state(state)
             print(f"    ✅ 발행 완료 mediaId: {mid}")
-            # CTA 댓글(유튜브 유도). 실패해도 발행은 성공으로 둠(권한 미부여 등).
-            try:
-                cmt = post_comment(mid, token)
-                state[r["file"]]["commentId"] = cmt
-                save_state(state)
-                print(f"    💬 CTA 댓글 완료: {cmt}")
-            except requests.HTTPError as e:
-                print(f"    ⚠️ 댓글 실패(발행은 성공): {e.response.text[:200]}")
-            except Exception as e:
-                print(f"    ⚠️ 댓글 실패(발행은 성공): {e}")
+            # CTA 댓글: ⚠️ IG Graph API는 '자기 게시물에 최상위 댓글 작성'을 지원하지 않음.
+            #   (2026-07-25 검증: 토큰에 instagram_manage_comments 있어도 (#10) permission 에러.
+            #    그 권한은 남의 댓글 조회/답글/숨김용이지 새 댓글 작성용이 아님.)
+            #   → CTA는 캡션(with_cta)이 정본. 아래는 IG가 나중에 지원할 때를 위해 남겨둔 옵트인 경로.
+            if os.environ.get("IG_TRY_COMMENT") == "1":
+              try:
+                  cmt = post_comment(mid, token)
+                  state[r["file"]]["commentId"] = cmt
+                  save_state(state)
+                  print(f"    💬 CTA 댓글 완료: {cmt}")
+              except Exception as e:
+                  print(f"    ⚠️ 댓글 실패(발행은 성공): {e}")
         except requests.HTTPError as e:
             print(f"    ❌ 실패: {e.response.text[:300]}")
         except Exception as e:
