@@ -178,6 +178,8 @@ def main():
     g.add_argument("--list", action="store_true", help="상태만")
     g.add_argument("--diagnose", metavar="KEY",
                    help="발행 없이 컨테이너→업로드→처리까지만(전체 응답 덤프). 발행된 것도 지정 가능")
+    g.add_argument("--publish-cid", metavar="CID:FILE",
+                   help="이미 FINISHED인 컨테이너를 바로 발행(재업로드 없이). 예: 1811…:reel_tangent.mp4")
     args = ap.parse_args()
 
     cfg = load_json("config.reels.json")
@@ -217,6 +219,25 @@ def main():
         sys.exit("ig_user_id 를 찾지 못했습니다 (IG_USER_ID 설정 또는 권한 확인).")
 
     now = datetime.now(timezone.utc).astimezone()
+
+    if args.publish_cid:
+        cid, _, fname = args.publish_cid.partition(":")
+        s = requests.get(f"{GRAPH}/{cid}",
+                         params={"fields": "status_code,status", "access_token": tok["access_token"]},
+                         timeout=30).json()
+        print(f"컨테이너 {cid} 상태: {s}")
+        if s.get("status_code") != "FINISHED":
+            sys.exit(f"FINISHED 아님 → 발행 불가: {s}")
+        r = requests.post(f"{GRAPH}/{tok['ig_user_id']}/media_publish",
+                          data={"creation_id": cid, "access_token": tok["access_token"]}, timeout=60)
+        _dump_resp("publish", r)
+        r.raise_for_status()
+        mid = r.json()["id"]
+        if fname:
+            state[fname] = {"mediaId": mid, "at": now.isoformat(), "via": f"cid:{cid}"}
+            save_state(state)
+        print(f"✅ 발행 완료 mediaId: {mid}")
+        return
 
     if args.diagnose:
         # 발행 없이 업로드 파이프라인만 검증(공개 부작용 없음 — media_publish 안 함)
