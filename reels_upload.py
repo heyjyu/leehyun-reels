@@ -58,10 +58,13 @@ def upload_container(ig_user_id, token, file_path, caption, verbose=False):
         _dump_resp("container", r)
     r.raise_for_status()
     cid = r.json()["id"]
-    print(f"    컨테이너: {cid}  (업로드 {size/1e6:.1f}MB)")
+    # ★ 컨테이너 응답의 uri를 그대로 사용(정본). 자체 조립 URL(v21/v23)은 Meta 버전업그레이드
+    #   (v25.0, 2026-07 관측)에서 rupload가 400 ProcessingFailedError를 뱉으며 전부 막혔음.
+    upload_uri = r.json().get("uri") or f"{RUPLOAD}/{cid}"
+    print(f"    컨테이너: {cid}  (업로드 {size/1e6:.1f}MB → {upload_uri})")
     # 2) 파일 바이트 업로드(rupload) — 메모리로 읽어 Content-Length 확정 + octet-stream 명시
     data = open(file_path, "rb").read()
-    up = requests.post(f"{RUPLOAD}/{cid}", headers={
+    up = requests.post(upload_uri, headers={
         "Authorization": f"OAuth {token}",
         "offset": "0", "file_size": str(size),
         "Content-Type": "application/octet-stream",
