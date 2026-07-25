@@ -1,0 +1,30 @@
+name: YT-IG Sync Audit
+
+on:
+  schedule:
+    - cron: '30 9 * * *'     # 09:30 UTC = 18:30 KST (그날 발행 직후 대조)
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-yt.txt
+      - name: Audit YT shorts vs IG reels schedule
+        env:
+          YT_TOKEN: ${{ secrets.YT_TOKEN }}
+        run: python sync_audit.py
+      - name: Telegram alert on mismatch
+        if: ${{ failure() }}
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] && { echo "TELEGRAM 미설정 — GitHub 실패메일로 대체"; exit 0; }
+          curl -s "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="$TG_CHAT" \
+            -d text="🚨 YT쇼츠↔IG릴스 예약 싱크 불일치 — https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
