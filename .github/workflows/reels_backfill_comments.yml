@@ -1,0 +1,36 @@
+name: IG Reels Backfill CTA Comments
+
+# 이미 발행된 릴스(published.json) 중 CTA 댓글 없는 것에 소급 댓글.
+# 수동 전용(cron 없음). instagram_manage_comments 권한 확인용으로도 씀.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "빈칸=댓글 달기, '--list'=대상만 확인"
+        default: '--list'
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Backfill CTA comments
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: python backfill_comments.py ${{ github.event.inputs.mode }}
+      - name: Commit state
+        if: ${{ github.event.inputs.mode != '--list' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add published.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "chore: backfill reel CTA comments [skip ci]" && (git pull --rebase origin master && git push))
