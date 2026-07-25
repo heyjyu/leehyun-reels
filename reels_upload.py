@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-API = "v21.0"
+API = "v23.0"
 GRAPH = f"https://graph.facebook.com/{API}"
 RUPLOAD = f"https://rupload.facebook.com/ig-api-upload/{API}"
 
