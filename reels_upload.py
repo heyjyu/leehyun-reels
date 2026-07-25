@@ -92,9 +92,21 @@ def upload_container(ig_user_id, token, file_path, caption, verbose=False):
     return cid
 
 
-def publish_reel(ig_user_id, token, file_path, caption):
-    """업로드(컨테이너 FINISHED까지) 후 ④ 발행. media id 반환."""
-    cid = upload_container(ig_user_id, token, file_path, caption)
+def publish_reel(ig_user_id, token, file_path, caption, attempts=5):
+    """업로드(컨테이너 FINISHED까지) 후 ④ 발행. media id 반환.
+    ⚠️ rupload가 간헐적으로 400 ProcessingFailedError를 뱉음(같은 파일·같은 코드가 몇 분 차이로
+    성공/실패 반복, 2026-07-25 관측. retriable:false는 믿지 말 것) → 컨테이너를 새로 파며 재시도."""
+    last = None
+    for i in range(1, attempts + 1):
+        try:
+            cid = upload_container(ig_user_id, token, file_path, caption)
+            break
+        except Exception as e:
+            last = e
+            print(f"    ↻ 업로드 {i}/{attempts}회차 실패, 새 컨테이너로 재시도: {e}")
+            time.sleep(20 * i)
+    else:
+        raise RuntimeError(f"{attempts}회 모두 실패: {last}")
     r = requests.post(f"{GRAPH}/{ig_user_id}/media_publish",
                       data={"creation_id": cid, "access_token": token}, timeout=60)
     r.raise_for_status()
