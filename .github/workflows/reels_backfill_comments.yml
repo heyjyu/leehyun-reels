@@ -7,8 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "빈칸=댓글 달기, '--list'=대상만 확인"
-        default: '--list'
+        # ⚠️ 기본값을 '--list'로 두면 수동 실행이 목록만 찍고 끝남(comments.yml 동일 함정).
+        description: "빈칸=댓글 달기(기본), '--list'=대상만 확인"
+        default: ''
 
 permissions:
   contents: write
