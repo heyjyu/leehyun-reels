@@ -46,14 +46,17 @@ def _dump_resp(tag, resp):
     print(f"    [{tag}] body: {resp.text[:500]}")
 
 
-def upload_container(ig_user_id, token, file_path, caption, verbose=False):
+def upload_container(ig_user_id, token, file_path, caption, thumb_offset=3000, verbose=False):
     """① 컨테이너 생성 ② 바이트 업로드 ③ 처리 폴링(FINISHED까지). 컨테이너 id 반환. 발행 안 함."""
     size = os.path.getsize(file_path)
     # 1) 컨테이너(REELS, resumable)
-    r = requests.post(f"{GRAPH}/{ig_user_id}/media", data={
+    payload = {
         "media_type": "REELS", "upload_type": "resumable",
         "caption": caption, "access_token": token,
-    }, timeout=60)
+    }
+    if thumb_offset is not None:
+        payload["thumb_offset"] = str(thumb_offset)
+    r = requests.post(f"{GRAPH}/{ig_user_id}/media", data=payload, timeout=60)
     if verbose:
         _dump_resp("container", r)
     r.raise_for_status()
@@ -61,7 +64,7 @@ def upload_container(ig_user_id, token, file_path, caption, verbose=False):
     # ★ 컨테이너 응답의 uri를 그대로 사용(정본). 자체 조립 URL(v21/v23)은 Meta 버전업그레이드
     #   (v25.0, 2026-07 관측)에서 rupload가 400 ProcessingFailedError를 뱉으며 전부 막혔음.
     upload_uri = r.json().get("uri") or f"{RUPLOAD}/{cid}"
-    print(f"    컨테이너: {cid}  (업로드 {size/1e6:.1f}MB → {upload_uri})")
+    print(f"    컨테이너: {cid}  (업로드 {size/1e6:.1f}MB, 썸네일 {thumb_offset}ms → {upload_uri})")
     # 2) 파일 바이트 업로드(rupload) — 메모리로 읽어 Content-Length 확정 + octet-stream 명시
     data = open(file_path, "rb").read()
     up = requests.post(upload_uri, headers={
@@ -92,7 +95,7 @@ def upload_container(ig_user_id, token, file_path, caption, verbose=False):
     return cid
 
 
-def publish_reel(ig_user_id, token, file_path, caption, attempts=2):
+def publish_reel(ig_user_id, token, file_path, caption, thumb_offset=3000, attempts=2):
     # attempts=2: rupload 400은 러너(IP)별 복불복이라 같은 런 안 재시도는 거의 무의미 —
     # 진짜 재시도는 워크플로의 "Retry on fresh runner"(새 러너 재디스패치)가 담당.
     """업로드(컨테이너 FINISHED까지) 후 ④ 발행. media id 반환.
@@ -101,7 +104,7 @@ def publish_reel(ig_user_id, token, file_path, caption, attempts=2):
     last = None
     for i in range(1, attempts + 1):
         try:
-            cid = upload_container(ig_user_id, token, file_path, caption)
+            cid = upload_container(ig_user_id, token, file_path, caption, thumb_offset=thumb_offset)
             break
         except Exception as e:
             last = e
@@ -283,10 +286,11 @@ def main():
             continue
         print(f"⬆️  {r['file']}")
         try:
-            mid = publish_reel(ig, token, path, with_cta(r.get("caption", "")))
+            offset = r.get("thumb_offset", 3000)
+            mid = publish_reel(ig, token, path, with_cta(r.get("caption", "")), thumb_offset=offset)
             state[r["file"]] = {"mediaId": mid, "at": now.isoformat()}
             save_state(state)
-            print(f"    ✅ 발행 완료 mediaId: {mid}")
+            print(f"    ✅ 발행 완료 mediaId: {mid} (썸네일 offset: {offset}ms)")
             # CTA 댓글: ⚠️ IG Graph API는 '자기 게시물에 최상위 댓글 작성'을 지원하지 않음.
             #   (2026-07-25 검증: 토큰에 instagram_manage_comments 있어도 (#10) permission 에러.
             #    그 권한은 남의 댓글 조회/답글/숨김용이지 새 댓글 작성용이 아님.)
