@@ -265,7 +265,7 @@ def main():
         if r.get("skip") or r["file"] in state:
             continue
         if args.key:
-            if r.get("key") == args.key:
+            if r.get("key") == args.key or r.get("file") == args.key or args.key in r.get("file", ""):
                 todo.append(r)
         elif args.now:
             todo.append(r)
