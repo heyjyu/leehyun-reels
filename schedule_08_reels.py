@@ -36,34 +36,49 @@ mutation CreatePost($input: CreatePostInput!) {
 
 TARGETS = [
     {
-        "file": "reel_08_surface_vs_curve.mp4",
-        "url": "https://raw.githubusercontent.com/heyjyu/leehyun-reels/master/compressed_08/reel_08_surface_vs_curve.mp4",
-        "title": "원기둥 옆면을 곡선이라고 생각했다면 100% 오답 [공간곡선 vs 곡면]",
-        "publishAt": "2026-10-05T18:00:00+09:00",
-        "caption": """원기둥 옆면을 곡선이라고 생각했다면 100% 오답 [공간곡선 vs 곡면]
+        "file": "reel_08_component_diff.mp4",
+        "url": "https://raw.githubusercontent.com/heyjyu/leehyun-reels/master/compressed_08/reel_08_component_diff.mp4",
+        "title": "성분별 미분은 벡터함수 미분의 정의가 아닙니다 [공간곡선]",
+        "publishAt": "2026-10-12T18:00:00+09:00",
+        "caption": """성분별 미분은 벡터함수 미분의 정의가 아닙니다 [공간곡선]
 
-공간에서 파라미터가 1개면 곡선(1차원), 2개면 곡면(2차원)입니다. r(t)=(cos t, sin t, z)에서 z가 자유로우면 곡선이 아니라 원기둥 곡면 전체가 됩니다.
+벡터함수의 도함수는 각 성분을 미분하는 게 아니라, 두 점을 잇는 할선벡터의 극한으로 정의됩니다. 왜 성분별 미분이 가능한지 그 숨겨진 원리를 1분 만에 확인하세요!
 
 ▶ 자세한 풀강의: 유튜브 leehyun_calc
 📚 정규강의·수학 컨설팅: 프로필 링크
 
 메가스터디 대학인강 유니스터디 · 이현 교수님
-#릴스 #미적분 #공간도형 #공간곡선 #매개변수 #벡터함수 #대학수학"""
+#릴스 #미적분 #공간곡선 #벡터함수 #대학수학"""
     },
     {
-        "file": "reel_08_helix.mp4",
-        "url": "https://raw.githubusercontent.com/heyjyu/leehyun-reels/master/compressed_08/reel_08_helix.mp4",
-        "title": "원기둥 타고 올라가는 곡선의 정체? 헬릭스(나선) 1분 컷 [공간곡선]",
-        "publishAt": "2026-10-08T18:00:00+09:00",
-        "caption": """원기둥 타고 올라가는 곡선의 정체? 헬릭스(나선) 1분 컷 [공간곡선]
+        "file": "reel_08_tangent_vector.mp4",
+        "url": "https://raw.githubusercontent.com/heyjyu/leehyun-reels/master/compressed_08/reel_08_tangent_vector.mp4",
+        "title": "접선벡터 크기가 무한대라고 답하면 바로 틀립니다 [벡터함수 미분]",
+        "publishAt": "2026-10-15T18:00:00+09:00",
+        "caption": """접선벡터 크기가 무한대라고 답하면 바로 틀립니다 [벡터함수 미분]
 
-(cos t, sin t, t)의 정체! 밑면에서는 원을 그리며 회전하고, z축으로는 시간에 비례해 일정하게 상승하는 대표적 공간곡선 헬릭스(Helix, 원나선)입니다.
+미분계수가 존재하려면 크기가 유한하고 0이 아니어야 합니다. 매끄러운 곡선에서 접선벡터의 크기와 단위접선벡터 T(t)를 구할 때 가장 많이 하는 실수를 짚어드립니다.
 
 ▶ 자세한 풀강의: 유튜브 leehyun_calc
 📚 정규강의·수학 컨설팅: 프로필 링크
 
 메가스터디 대학인강 유니스터디 · 이현 교수님
-#릴스 #미적분 #공간곡선 #헬릭스 #나선 #벡터함수 #대학수학"""
+#릴스 #미적분 #접선벡터 #단위접선벡터 #대학수학"""
+    },
+    {
+        "file": "reel_08_sphere_orthogonal.mp4",
+        "url": "https://raw.githubusercontent.com/heyjyu/leehyun-reels/master/compressed_08/reel_08_sphere_orthogonal.mp4",
+        "title": "구 표면을 어떻게 기어가도 속도는 반지름과 수직인 이유 [벡터함수 공간곡선]",
+        "publishAt": "2026-10-19T18:00:00+09:00",
+        "caption": """구 표면을 어떻게 기어가도 속도는 반지름과 수직인 이유 [벡터함수 공간곡선]
+
+구 표면 위를 아무리 불규칙하게 움직여도 속도벡터는 항상 위치벡터와 직교합니다! 벡터 내적의 미분법으로 10초 만에 끝내는 필수 증명 치트키.
+
+▶ 자세한 풀강의: 유튜브 leehyun_calc
+📚 정규강의·수학 컨설팅: 프로필 링크
+
+메가스터디 대학인강 유니스터디 · 이현 교수님
+#릴스 #미적분 #공간곡선 #벡터내적 #대학수학"""
     }
 ]
 
