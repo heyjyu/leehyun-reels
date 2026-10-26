@@ -4,7 +4,7 @@ from buffer_scheduler import get_token, get_channels, gql_request
 
 token = get_token()
 channels = get_channels(token)
-ig_chan = next(c for c in channels if c["service"] == "instagram")
+ig_chan = next(c for c in channels if c.get("name") == "leehyun_calc" and c.get("service") == "instagram")
 
 create_mut = """
 mutation CreatePost($input: CreatePostInput!) {
